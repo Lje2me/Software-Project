@@ -1,0 +1,59 @@
+from PIL import Image
+from PIL import ImageFilter
+import sys
+filename = "Pano.jpg"
+with Image.open(filename) as img:
+    img.load()
+
+type(img)
+
+
+isinstance(img, Image.Image)
+def erode(cycles, image):
+    for _ in range(cycles):
+        image = image.filter(ImageFilter.MinFilter(3))
+    return image
+
+
+def dilate(cycles, image):
+    for _ in range(cycles):
+        image = image.filter(ImageFilter.MaxFilter(3))
+    return image
+
+car_img = img.crop((10, 5, 1000, 637))
+car_img_gray = car_img.convert("L")
+
+red, green, blue = car_img.split()
+#red.show()
+#green.show()
+#blue.show()
+
+
+
+threshold=100
+car_img_threshold = green.point (lambda x:255 if x > threshold else 0)
+car_img_threshold = car_img_threshold.convert("1")
+#car_img_threshold.show()
+step_1 = erode(0, car_img_threshold)
+#step_1.show()
+step_2 = dilate(24, step_1)
+#step_2.show()
+car_mask= erode(2, step_2)
+#car_mask.show()
+car_mask = car_mask.convert("L")
+car_mask = car_mask.filter(ImageFilter.BoxBlur(10))
+blank = car_img.point(lambda _:0)
+car_seg = Image.composite(car_img, blank, car_mask)
+
+filename_bg= "Figure_13.png"
+with Image.open(filename_bg) as img_bg:
+    img_bg.load()
+
+img_bg.paste(
+    car_img.resize((car_img.width // 1, car_img.height // 1)),
+     (100,200),
+      car_mask.resize((car_mask.width // 1, car_mask.height // 1))
+)
+
+img_bg.show()
+img_bg.save("Super12.png")
